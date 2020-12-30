@@ -20,5 +20,3 @@ pip install sxm_viewer
 sxmv
 ```
 
-## Thanks
-Program completed on 2020/12/22, her birthday.
