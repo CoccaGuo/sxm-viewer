@@ -208,11 +208,37 @@ class Main_window(QtWidgets.QMainWindow):
 
     
     def cfg_file_setup(self):
+        cfg_txt = """
+[file]
+output_dir = /
+last_file = /
+last_dir = /
+
+[sys]
+help_info = 1
+
+[plot]
+show_title = 1
+show_axis = 1
+channel = Current
+cmap = viridis
+
+[save]
+fig_dpi = 100
+
+[about]
+help = 
+This tool aims to inspect and save figures fast. Load a folder, and use up/down to switch the files swiftly. Press key S to save the .png file into the configured folder(in config.ini) directly. 
+Suppress this help_info in options.
+info = Ver 0.2 by Cocca on 2021.1.7
+"""
         self.root_path = os.path.join(os.getcwd(), '.sxm_viewer')
         if not os.path.exists(self.root_path):
             os.mkdir(self.root_path)
         if not os.path.exists(os.path.join(self.root_path, "config.ini")):
-            QtWidgets.QMessageBox.warning(self, "config file not found", "config file not found, program will exit.", QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.Yes)
+            with open(os.path.join(self.root_path, "config.ini"), 'w') as f:
+                f.write(cfg_txt)
+            # QtWidgets.QMessageBox.warning(self, "config file not found", "config file not found, program will exit.", QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.Yes)
             sys.exit(1)
 
 
