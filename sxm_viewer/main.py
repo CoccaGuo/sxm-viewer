@@ -227,8 +227,7 @@ cmap = viridis
 fig_dpi = 100
 
 [about]
-help = This tool aims to inspect and save figures fast. Load a folder, and use up/down to switch the files swiftly. Press key S to save the .png file into the configured folder(in config.ini) directly. 
-Suppress this help_info in options.
+help = This tool aims to inspect and save figures fast. Load a folder, and use up/down to switch the files swiftly. Press key S to save the .png file into the configured folder(in config.ini) directly. Suppress this help_info in options.
 info = Ver 0.2 by Cocca on 2021.1.7
 """
         self.root_path = os.path.join(os.getcwd(), '.sxm_viewer')
