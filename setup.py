@@ -33,6 +33,9 @@ if not os.path.exists(root_path):
 with open(os.path.join(root_path, "config.ini"), 'w') as f:
                 f.write(cfg_txt)
 
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+
 setuptools.setup(
     name="sxm-viewer",
     version="0.1",
@@ -40,6 +43,8 @@ setuptools.setup(
     author_email="guojiadong@bnu.edu.cn",
     description="a PyQt5 based tool for inspecting *.sxm files and save them as figures swiftly.",
     url="https://github.com/CoccaGuo/sxm-viewer",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
