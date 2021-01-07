@@ -1,5 +1,5 @@
 # test.py by Cocca Guo at 2020/12/22 14:25:58
-# main.py by Cocca Guo at 2021/01/07 11:47:21 version 0.2 add options and warnings.
+# main.py by Cocca Guo at 2021/01/07 11:47:21 version 0.2, add options and warnings.
 
 
 import os
@@ -128,12 +128,20 @@ class Main_window(QtWidgets.QMainWindow):
             self.save(self.current_file, fname[0])
 
     
-    def save(self, sxmpath: str, savepath: str, channel='Current'):
+    def save(self, sxmpath: str, savepath: str):
         if not sxmpath.endswith(".sxm"): return
         sxm = pySPM.SXM(sxmpath)
-        sxm.get_channel(channel).show(cmap='viridis')
-        plt.title(None)
-        plt.savefig(savepath, dpi=int(self.cfg.get("save", "fig_dpi")), bbox_inches = 'tight',pad_inches = 0)
+        channel=self.cfg.get("plot", "channel")
+        sxm.get_channel(channel).show(cmap=self.cfg.get("save", "cmap"))
+        if int(self.cfg.get("save", "show_title")) == 0:
+            plt.title(None)
+        try:
+            if int(self.cfg.get("save", "show_axis")) == 0:
+                plt.savefig(savepath, dpi=int(self.cfg.get("save", "fig_dpi")), bbox_inches = 'tight',pad_inches = 0)
+            else:
+                plt.savefig(savepath, dpi=int(self.cfg.get("save", "fig_dpi")))
+        except PermissionError as e:
+            QtWidgets.QMessageBox.warning(self, "unable to save", "Unable to save due to a PermissionError. Have you changed the the default path in Help-Options?", QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.Yes)
 
 
     def options(self):
@@ -224,10 +232,13 @@ channel = Current
 cmap = viridis
 
 [save]
+show_title = 0
+show_axis = 0
+cmap = viridis
 fig_dpi = 100
 
 [about]
-help = This tool aims to inspect and save figures fast. Load a folder, and use up/down to switch the files swiftly. Press key S to save the .png file into the configured folder(in config.ini) directly. Suppress this help_info in options.
+help = This tool aims to inspect and save figures fast. Load a folder, and use up/down to switch the files swiftly. Press key S to save the .png file directly(configure the save_dir in help-option first). Suppress this help_info in options.
 info = Ver 0.2 by Cocca on 2021.1.7
 """
         self.root_path = os.path.join(os.getcwd(), '.sxm_viewer')
