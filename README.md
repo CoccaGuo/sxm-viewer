@@ -20,3 +20,8 @@ pip install sxm_viewer
 sxmv
 ```
 
+## Versions
+
+- version 0.2 on 2021/1/7: add options pane. You can change your colormap, title and axis. You can view other files in folder even if you just open a file.
+- version 0.1 on 2020/12/22: view .sxm files and folders. First version. A memorable day.
+

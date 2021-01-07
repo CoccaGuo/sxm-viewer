@@ -1,4 +1,0 @@
-pySPM
-PyQt5
-matplotlib
-sxm_converter
