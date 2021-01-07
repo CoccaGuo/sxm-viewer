@@ -227,19 +227,20 @@ cmap = viridis
 fig_dpi = 100
 
 [about]
-help = 
-This tool aims to inspect and save figures fast. Load a folder, and use up/down to switch the files swiftly. Press key S to save the .png file into the configured folder(in config.ini) directly. 
+help = This tool aims to inspect and save figures fast. Load a folder, and use up/down to switch the files swiftly. Press key S to save the .png file into the configured folder(in config.ini) directly. 
 Suppress this help_info in options.
 info = Ver 0.2 by Cocca on 2021.1.7
 """
         self.root_path = os.path.join(os.getcwd(), '.sxm_viewer')
         if not os.path.exists(self.root_path):
             os.mkdir(self.root_path)
-        if not os.path.exists(os.path.join(self.root_path, "config.ini")):
+        if not os.path.exists(os.path.join(self.root_path, "ver0.2")):
+            with open(os.path.join(self.root_path, "ver0.2"), 'w') as f:
+                f.write("version 0.2")
             with open(os.path.join(self.root_path, "config.ini"), 'w') as f:
                 f.write(cfg_txt)
             # QtWidgets.QMessageBox.warning(self, "config file not found", "config file not found, program will exit.", QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.Yes)
-            sys.exit(1)
+            
 
 
 class Options(QtWidgets.QWidget):
