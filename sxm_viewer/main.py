@@ -69,6 +69,10 @@ class Main_window(QtWidgets.QMainWindow):
         self.m_tool_save_pic.triggered.connect(self.save_pic)
         self.m_tool.addAction(self.m_tool_save_pic)
 
+        self.m_tool_make_dataset = QtWidgets.QAction("Make Dataset", self.m_tool)
+        self.m_tool_make_dataset.triggered.connect(self.make_dataset)
+        self.m_tool.addAction(self.m_tool_make_dataset)
+
         self.m_help_options = QtWidgets.QAction("Options", self.m_help)
         self.m_help_options.triggered.connect(self.options)
         self.m_help.addAction(self.m_help_options)
@@ -143,6 +147,10 @@ class Main_window(QtWidgets.QMainWindow):
         except PermissionError as e:
             QtWidgets.QMessageBox.warning(self, "unable to save", "Unable to save due to a PermissionError. Have you changed the the default path in Help-Options?", QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.Yes)
 
+
+    # a typical good/bad dataset
+    def make_dataset(self):
+        pass 
 
     def options(self):
         self.opt_win = Options(os.path.join(self.root_path, "config.ini"))
@@ -222,6 +230,9 @@ output_dir = /
 last_file = /
 last_dir = /
 
+[dataset]
+last_base_path = /
+
 [sys]
 help_info = 1
 
@@ -239,14 +250,14 @@ fig_dpi = 100
 
 [about]
 help = This tool aims to inspect and save figures fast. Load a folder, and use up/down to switch the files swiftly. Press key S to save the .png file directly(configure the save_dir in help-option first). Suppress this help_info in options.
-info = Ver 0.2 by Cocca on 2021.1.7
+info = Ver 0.3 by Cocca on 2021.5.3
 """
         self.root_path = os.path.join(os.getcwd(), '.sxm_viewer')
         if not os.path.exists(self.root_path):
             os.mkdir(self.root_path)
-        if not os.path.exists(os.path.join(self.root_path, "ver0.2")):
-            with open(os.path.join(self.root_path, "ver0.2"), 'w') as f:
-                f.write("version 0.2")
+        if not os.path.exists(os.path.join(self.root_path, "ver0.3")):
+            with open(os.path.join(self.root_path, "ver0.3"), 'w') as f:
+                f.write("version 0.3")
             with open(os.path.join(self.root_path, "config.ini"), 'w') as f:
                 f.write(cfg_txt)
             # QtWidgets.QMessageBox.warning(self, "config file not found", "config file not found, program will exit.", QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.Yes)
