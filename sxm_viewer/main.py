@@ -1,10 +1,14 @@
 # test.py by Cocca Guo at 2020/12/22 14:25:58
 # main.py by Cocca Guo at 2021/01/07 11:47:21 version 0.2, add options and warnings.
+# main.py by CoccaGuo at 2021/05/04 16:15 version 0.3, add make dataset support.
 
+import os, sys
+import time
+import json, configparser
+from json.decoder import JSONDecodeError
+import cv2
 
-import os
-import sys
-import configparser
+import numpy as np
 
 import matplotlib
 matplotlib.use('Qt5Agg')
@@ -34,6 +38,7 @@ class Main_window(QtWidgets.QMainWindow):
         self.statusBar = QtWidgets.QStatusBar()
         self.setStatusBar(self.statusBar)
         self.setCentralWidget(QtWidgets.QWidget())
+        self.dataset_mode = False
 
 
     # this func only loads once when program starts
@@ -125,7 +130,7 @@ class Main_window(QtWidgets.QMainWindow):
 
     def save_pic(self):
         if self.current_file is None: 
-            QtWidgets.QMessageBox.information(self, "Infomation", "please open a file first.", QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.Yes)
+            QtWidgets.QMessageBox.information(self, "Information", "please open a file first.", QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.Yes)
             return
         fname = QtWidgets.QFileDialog.getSaveFileName(self, "Save Figure", self.cfg.get("file", "output_dir"), "Image Files (*.png)")     
         if fname[0]:
@@ -150,7 +155,90 @@ class Main_window(QtWidgets.QMainWindow):
 
     # a typical good/bad dataset
     def make_dataset(self):
-        pass 
+        CURRENT_VERSION = 0.1
+
+        folder_choose = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Dataset Directory", self.cfg.get("dataset", "last_base_path"))     
+        if folder_choose == "": 
+            self.statusBar.showMessage("Dataset Directory Not Set, exit.")
+            return
+        self.cfg.set("dataset", "last_base_path", folder_choose)
+        self.refresh_config()
+        self.dataset_dir = folder_choose
+        self.statusBar.showMessage("Dataset Mode: "+self.dataset_dir)
+        # deal with config file. records index, ratio(good/bad), input time, file source etc.
+        dataset_config_file = os.path.join(self.dataset_dir, 'config.json')
+        if not os.path.exists(dataset_config_file):
+            with open(dataset_config_file, 'w') as f:
+                f.write('{"version": 0.1, "good_index":0, "bad_index":0, "source_file":"/", "setup_time":"'+time.ctime()+'", "good":{}, "bad":{}}')
+        with open(dataset_config_file, 'r') as cfg_f:
+            try:
+                cfg = json.load(cfg_f)
+            except JSONDecodeError as e:
+                self.statusBar.showMessage("config.json error. Unable to read the level file.")
+                return
+        if cfg['version'] is not CURRENT_VERSION:
+            pass # version err
+        source_choose, _ = QtWidgets.QFileDialog.getOpenFileName(self,  "Choose Data Source File",  cfg['source_file'],  "SXM Files (*.sxm)")
+        if source_choose == "":
+            self.statusBar.showMessage("Data Source Not Selected, exit.")
+            return
+        cfg['source_file'] = source_choose
+        self.dataset_source = source_choose
+        with open(dataset_config_file, 'w') as f:
+            json.dump(cfg, f)
+        self.statusBar.setStyleSheet("background-color: #98FB98")
+        if not os.path.exists(os.path.join(self.dataset_dir, 'good')):
+            print(os.path.join(self.dataset_dir, 'good'))
+            os.mkdir(os.path.join(self.dataset_dir, 'good'))
+            os.mkdir(os.path.join(self.dataset_dir, 'bad')) 
+
+        self.dataset_mode = True
+        self.dataset_cfg = cfg
+        self.dataset_cfg_file = dataset_config_file
+
+        self.current_file = source_choose
+        self.statusBar.showMessage("file loaded: "+self.current_file)
+        self.sxm_show()
+           
+
+    def sort_data(self, flag_path):
+        if self.dataset_mode:
+            self.statusBar.setStyleSheet("background-color: yellow")
+            self.statusBar.showMessage('Saving: '+self.current_file)
+            path = os.path.join(self.dataset_dir, flag_path)
+            index = self.dataset_cfg['good_index'] if flag_path == 'good' else self.dataset_cfg['bad_index']
+            filename = "{:05d}_Default.npy".format(index+1)
+            filename_ransac = "{:05d}_Ransac.npy".format(index+1) # 感觉差不多没有对ransac处理
+            data = pySPM.SXM(self.current_file).get_channel(self.cfg.get("plot", "channel")).pixels
+            resized_data = cv2.resize(data, (64, 64), interpolation=cv2.INTER_AREA)
+            np.save(os.path.join(path, filename), resized_data)
+            np.save(os.path.join(path, filename_ransac), resized_data)
+
+            # deal with config.json
+            if flag_path == 'good':
+                self.dataset_cfg['good_index'] += 1
+                self.dataset_cfg['good'][self.dataset_cfg['good_index']] = {
+                    'time': time.ctime(), 
+                    'saved_default': os.path.join(flag_path, filename),
+                    'saved_ransac': os.path.join(flag_path, filename_ransac),
+                    'source': self.current_file,
+                    'source_dir': self.current_dir
+                    }
+            if flag_path == 'bad':
+                self.dataset_cfg['bad_index'] += 1
+                self.dataset_cfg['bad'][self.dataset_cfg['bad_index']] = {
+                    'time': time.ctime(), 
+                    'saved_default': os.path.join(flag_path, filename),
+                    'saved_ransac': os.path.join(flag_path, filename_ransac),
+                    'source': self.current_file,
+                    'source_dir': self.current_dir
+                    }
+            # save it
+            with open(self.dataset_cfg_file, 'w') as f:
+                json.dump(self.dataset_cfg, f)
+            self.statusBar.setStyleSheet("background-color: #98FB98")
+            self.statusBar.showMessage('dataset saved: '+self.current_file)
+            
 
     def options(self):
         self.opt_win = Options(os.path.join(self.root_path, "config.ini"))
@@ -183,6 +271,8 @@ class Main_window(QtWidgets.QMainWindow):
         title = os.path.basename(self.current_file)
         if int(self.cfg.get("plot", "show_title")) == 0:
             title = ""
+        if self.dataset_mode is True:
+            title = "Dataset Mode: press 'x' as BAD, 'z' as GOOD"
         sxm.get_channel(channel).show(cmap=cmap, ax=ax, title=title)
         canvas = FigureCanvas(fig)
         self.setCentralWidget(canvas)
@@ -214,6 +304,14 @@ class Main_window(QtWidgets.QMainWindow):
             self.sxm_folder_change(-1)
         if QKeyEvent.key()== Qt.Key_Down or QKeyEvent.key()== Qt.Key_Right:
             self.sxm_folder_change(1)
+        if self.dataset_mode:
+            if QKeyEvent.key()== Qt.Key_X:
+
+                self.sort_data('bad')
+                self.sxm_folder_change(1)
+            if QKeyEvent.key()== Qt.Key_Z:
+                self.sort_data('good')
+                self.sxm_folder_change(1)
 
     
     def wheelEvent(self, event):
@@ -238,8 +336,8 @@ help_info = 1
 
 [plot]
 show_title = 1
-show_axis = 1
-channel = Current
+show_axis = 0
+channel = Z
 cmap = viridis
 
 [save]
@@ -249,7 +347,7 @@ cmap = viridis
 fig_dpi = 100
 
 [about]
-help = This tool aims to inspect and save figures fast. Load a folder, and use up/down to switch the files swiftly. Press key S to save the .png file directly(configure the save_dir in help-option first). Suppress this help_info in options.
+help = This tool aims to inspect and save figures fast. Load a folder, and use up/down to switch the files swiftly. Press key S to save the .png file directly(configure the save_dir in help-option first). Support making dataset in tools. Suppress this help_info in options.
 info = Ver 0.3 by Cocca on 2021.5.3
 """
         self.root_path = os.path.join(os.getcwd(), '.sxm_viewer')

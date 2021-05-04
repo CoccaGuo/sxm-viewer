@@ -27,9 +27,11 @@ setuptools.setup(
             ],
         },
     install_requires=[
+    'numpy',
     'pySPM',
     'PyQt5',
-    'matplotlib'
+    'matplotlib',
+    'python-opencv'
     ],
     python_requires='>=3',
 )
