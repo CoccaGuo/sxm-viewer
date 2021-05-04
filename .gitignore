@@ -1,4 +1,4 @@
 dist/
 build/
 *.egg-info/
-.sxm_viewer/
+.sxm_viewer/*
